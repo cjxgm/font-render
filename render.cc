@@ -1,4 +1,4 @@
-// run: apitrace trace -o trace $exec && qapitrace trace
+// run: apitrace trace -o $exec.trace $exec && qapitrace $exec.trace
 #include <string>
 #include <memory>
 #include <cmath>
