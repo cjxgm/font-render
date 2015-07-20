@@ -1,0 +1,34 @@
+=head1 NAME
+
+map-file: memory-map a file
+
+=head1 EXAMPLE
+
+	#include "map-file.hh"
+
+	// print out file content
+	auto file = tue::map_file("filename");
+	for (auto i=0u; i<file->size; i++)
+		std::cerr << reinterpret_cast<char*>(file->data)[i];
+	std::cerr << "\n";
+
+=head1 SYNOPSIS
+
+	namespace tue
+	{
+		struct file_map final
+		{
+			void* data;
+			std::size_t size;
+		};
+
+		std::unique_ptr<file_map> map_file(std::string const& path);
+
+		inline namespace map_file_exceptions
+		{
+			struct open_failure : std::runtime_error;
+			struct stat_failure : std::runtime_error;
+			struct  map_failure : std::runtime_error;
+		}
+	}
+

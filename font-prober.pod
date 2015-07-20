@@ -1,0 +1,75 @@
+=head1 NAME
+
+C<font-prober> - A simple API for listing and querying installed fonts
+
+=head1 SYNOPSIS
+
+	#include "font-prober.hh"
+
+	namespace font_prober
+	{
+		// Properties. Also used as predicate for "querys"
+		struct family;
+		struct file;
+		struct index;
+		struct style;
+		struct fullname;
+		struct outline;
+		struct scalable;
+
+		// stores font information queried. Only stores the provided properties.
+		struct font_info<PROPERTYS...>;
+
+		// get a list of all available fonts
+		vector<font_info<PROPERTYS...>> list<PROPERTYS...>();
+
+		// get a list of all available fonts, sorted by relevance of the "querys"
+		// most relevant (including exactly matched) ones will have small indices.
+		vector<font_info<PROPERTYS...>> list<PROPERTYS...>(...querys);
+
+		// pick the user preferred font
+		font_info<PROPERTYS...> pick<PROPERTYS...>();
+
+		// pick the font that is most relevant to "querys"
+		font_info<PROPERTYS...> pick<PROPERTYS...>(...querys);
+	}
+
+=head1 EXAMPLES
+
+	using namespace font_prober;	// for demonstration purpose only
+
+	// print the user-preferred font family
+	cerr << pick<family>().family << "\n";
+	// possible output:
+	// Cantarell
+
+	// print the user-preferred font family and the corresponding font file
+	auto f = pick<family, file>();
+	cerr << f.family << "\t" << f.file << "\n";
+	// possible output:
+	// Cantarell	/usr/share/fonts/cantarell/Cantarell-Regular.otf
+
+	// list all available fonts with family and file
+	for (auto& f: list<family, file>())
+		cerr << f.family << "\t" << f.file << "\n";
+
+	// print the queried font family, style and the corresponding font file
+	auto f = pick<family, file, style>(fullname{"Fantasque Sans Mono Bold"});
+	cerr << f.family << ", " << f.style << "\t" << f.file << "\n";
+	// possible output:
+	// Fantasque Sans Mono, Bold	/usr/share/fonts/TTF/FantasqueSansMono-Bold.ttf
+
+	// print the queried font fullname and the corresponding font file
+	auto f = pick<fullname, file>(family{"Fantasque Sans Mono"}, style{"Bold"});
+	cerr << f.fullname << "\t" << f.file << "\n";
+	// possible output:
+	// Fantasque Sans Mono Bold	/usr/share/fonts/TTF/FantasqueSansMono-Bold.ttf
+
+=head1 DESCRIPTION
+
+This header-only library is a wrapper around fontconfig.
+
+=head1 SEE ALSO
+
+L<Fontconfig Documentation|http://www.freedesktop.org/software/fontconfig/fontconfig-devel/t1.html>
+
