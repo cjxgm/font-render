@@ -167,6 +167,7 @@ out vec2 x_;
 out vec2 y_;
 uniform float time;
 uniform int rotv;	// rotate vertex
+uniform float scale;
 
 void main()
 {
@@ -174,8 +175,8 @@ void main()
 	float s = sin(time);
 	x_ = vec2(c, s);
 	y_ = vec2(-s, c);
-	if (rotv == 1) gl_Position = vec4(pos.x*x_ + pos.y*y_, 0, 1);
-	else gl_Position = vec4(pos, 0, 1);
+	if (rotv == 1) gl_Position = vec4((pos.x*x_ + pos.y*y_)*scale, 0, 1);
+	else gl_Position = vec4(pos*scale, 0, 1);
 	uv_ = _uv;
 }
 			)vertex",
@@ -205,6 +206,7 @@ void main()
 	glUniform1i(glGetUniformLocation(filler, "tex"), 0);
 	int utime = glGetUniformLocation(filler, "time");
 	int urotv = glGetUniformLocation(filler, "rotv");
+	int uscale = glGetUniformLocation(filler, "scale");
 
 	// mainloop
 	while (!glfwWindowShouldClose(win)) {
@@ -217,8 +219,11 @@ void main()
 		glClear(GL_COLOR_BUFFER_BIT);
 		glUniform1f(utime, glfwGetTime()/10);
 		glUniform1i(urotv, false);
+		glUniform1f(uscale, 1);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glUniform1f(utime, glfwGetTime()/2);
 		glUniform1i(urotv, true);
+		glUniform1f(uscale, sin(glfwGetTime()/2)*6);
 		glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);
 
 
