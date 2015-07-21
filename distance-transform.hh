@@ -3,5 +3,6 @@
 
 namespace tue
 {
+	void distance_transform(image & img);
 }
 

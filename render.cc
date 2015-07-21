@@ -1,9 +1,10 @@
-// run-: apitrace trace -o $exec.trace $exec && qapitrace $exec.trace
+// run: apitrace trace -o $exec.trace $exec && qapitrace $exec.trace
 // run-: valgrind --leak-check=full $exec
 #include <string>
 #include <memory>
 #include <cmath>
 #include "list-fonts.hh"	// lib: fontconfig
+#include "distance-transform.hh"
 
 // lib: gl
 #define GL_GLEXT_PROTOTYPES
@@ -76,12 +77,13 @@ namespace
 
 int main()
 {
-	auto fonts = tue::list_fonts();
+	auto fonts = tue::list_fonts("WenQuanYi Micro Hei");
 	cerr << fonts.size() << " fonts available\n";
 
-	auto fa = fonts[0].render('a', 1024);
+	auto fa = fonts[0].render(U'猫', 1024);
 	fa.padding(fa.h()/8, fa.w()/8);
-	//tue::distance_transform(fa);
+	tue::distance_transform(fa);
+	fa.clerp(-20, 50, 1, 0);
 	fa.scale_to_height(64);
 
 	// init host
@@ -90,7 +92,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	auto win = glfwCreateWindow(16*50, 9*50, "demo", {}, {});
+	auto win = glfwCreateWindow(16*40, 16*40, "demo", {}, {});
 	glfwMakeContextCurrent(win);
 	glfwSwapInterval(1);
 
@@ -127,6 +129,7 @@ int main()
 	}
 
 	constexpr auto tex_mag = 8;
+	constexpr auto tex_size = float(1 << tex_mag);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F,
 			1<<tex_mag, 1<<tex_mag, 0, GL_RED, GL_FLOAT,
 			invalid_pattern(tex_mag).get());
@@ -137,15 +140,22 @@ int main()
 
 	static float data[] = {
 		// points
-		-0.9, -0.9, 0.9, -0.9, -0.9, 0.9, 0.9, 0.9,
+		-1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0,
+		-0.4, -0.4, 0.4, -0.4, -0.4, 0.4, 0.4, 0.4,
 		// uvs
-		0, 0, 1, 0, 0, 1, 1, 1,
+		0.4, 0.4, 0.7, 0.4, 0.4, 0.7, 0.7, 0.7,
+		0, 0, fa.w()/tex_size, 0, 0, fa.h()/tex_size, fa.w()/tex_size, fa.h()/tex_size,
 	};
 	glBufferData(GL_ARRAY_BUFFER, sizeof(data), data, GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, (void*)(4*2*sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, (void*)(8*2*sizeof(float)));
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
+
+	// enable blending
+	glEnable(GL_BLEND);
+	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 
 	// create program
 	auto filler = make_program(
@@ -156,6 +166,7 @@ out vec2 uv_;
 out vec2 x_;
 out vec2 y_;
 uniform float time;
+uniform int rotv;	// rotate vertex
 
 void main()
 {
@@ -163,7 +174,8 @@ void main()
 	float s = sin(time);
 	x_ = vec2(c, s);
 	y_ = vec2(-s, c);
-	gl_Position = vec4(pos, 0, 1);
+	if (rotv == 1) gl_Position = vec4(pos.x*x_ + pos.y*y_, 0, 1);
+	else gl_Position = vec4(pos, 0, 1);
 	uv_ = _uv;
 }
 			)vertex",
@@ -171,25 +183,28 @@ void main()
 in vec2 uv_;
 in vec2 x_;
 in vec2 y_;
-out vec3 color;
+out vec4 color;
 uniform sampler2D tex;
+uniform int rotv;	// rotate vertex
 
 void main()
 {
 	//vec2 p = (gl_FragCoord.x * x_ + gl_FragCoord.y * y_) / 1000;
-	vec2 p = uv_.x * x_ + uv_.y * y_;
+	vec2 p;
+	if (rotv == 1) p = uv_;
+	else p = uv_.x * x_ + uv_.y * y_;
+
 	float a = texture(tex, p).r;
 	float ina = smoothstep(0.8-fwidth(a)+0.07, 0.8+0.07, a);
 	float outa = smoothstep(0.8-fwidth(a), 0.8, a);
-	color = mix(mix(vec3(1, 1, 1), vec3(0, 0, 0), outa), vec3(1, 0.5, 0), ina);
-//	float ina = 1 - smoothstep(0.2-0.07, 0.2+fwidth(a)-0.07, a);
-//	float outa = 1 - smoothstep(0.2, 0.2+fwidth(a), a);
-//	color = mix(mix(vec3(1, 1, 1), vec3(0, 0, 0), outa), vec3(1, 0.5, 0), ina);
+	color.rgb = mix(vec3(0, 0, 0), vec3(1, 0.5, 0), ina);
+	color.a = outa;
 }
 			)fragment");
 	glUseProgram(filler);
 	glUniform1i(glGetUniformLocation(filler, "tex"), 0);
 	int utime = glGetUniformLocation(filler, "time");
+	int urotv = glGetUniformLocation(filler, "rotv");
 
 	// mainloop
 	while (!glfwWindowShouldClose(win)) {
@@ -198,10 +213,13 @@ void main()
 		glfwGetFramebufferSize(win, &w, &h);
 		glViewport(0, 0, w, h);
 
-		glUniform1f(utime, glfwGetTime()/10);
 		// render
 		glClear(GL_COLOR_BUFFER_BIT);
+		glUniform1f(utime, glfwGetTime()/10);
+		glUniform1i(urotv, false);
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+		glUniform1i(urotv, true);
+		glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);
 
 
 		// event dispatching

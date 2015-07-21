@@ -25,9 +25,9 @@ namespace tue
 		};
 
 		image img{w, h};
-		for (int y=0; y<h; y++)
-			for (int x=0; x<w; x++)
-				img.at(x, y) = pixmap[(h-y-1)*w + x] / 255.0f;
+		img.each([&](auto& v, auto x, auto y) {
+			v = pixmap[(h-y-1)*w + x] / 255.0f;
+		});
 
 		return img;
 	}
