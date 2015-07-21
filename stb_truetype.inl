@@ -9,6 +9,10 @@
 #include "font.hh"
 #define STB_TRUETYPE_IMPLEMENTATION
 
+#warning TODO: remove all unused function
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+
 // stb_truetype.h - v1.06 - public domain
 // authored from 2009-2014 by Sean Barrett / RAD Game Tools
 //
@@ -2029,7 +2033,7 @@ void stbtt__fill_active_edges_new(float *scanline, float *scanline_fill, int len
 }
 
 // directly AA rasterize edges w/o supersampling
-void stbtt__rasterize_sorted_edges(stbtt__bitmap *result, stbtt__edge *e, int n, int vsubsample, int off_x, int off_y, void *userdata)
+void stbtt__rasterize_sorted_edges(stbtt__bitmap *result, stbtt__edge *e, int n, int, int off_x, int off_y, void *userdata)
 {
    stbtt__hheap hh = { };
    stbtt__active_edge *active = NULL;
@@ -2883,3 +2887,4 @@ STBTT_DEF int stbtt_FindMatchingFont(const unsigned char *font_collection, const
 
 }
 
+#pragma clang diagnostic pop

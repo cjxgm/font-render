@@ -1,5 +1,5 @@
 #pragma once
-#include <fontconfig/fontconfig.h>
+#include <fontconfig/fontconfig.h>	// lib: fontconfig
 #include <vector>
 #include <string>
 #include <memory>

@@ -1,7 +1,9 @@
-// run: apitrace trace -o $exec.trace $exec && qapitrace $exec.trace
+// run-: apitrace trace -o $exec.trace $exec && qapitrace $exec.trace
+// run-: valgrind --leak-check=full $exec
 #include <string>
 #include <memory>
 #include <cmath>
+#include "list-fonts.hh"	// lib: fontconfig
 
 // lib: gl
 #define GL_GLEXT_PROTOTYPES
@@ -9,6 +11,10 @@
 
 // lib: glfw3
 #include <GLFW/glfw3.h>
+
+#include <iostream>
+using std::cerr;
+
 
 namespace font
 {
@@ -70,6 +76,14 @@ namespace
 
 int main()
 {
+	auto fonts = tue::list_fonts();
+	cerr << fonts.size() << " fonts available\n";
+
+	auto fa = fonts[0].render('a', 1024);
+	fa.padding(fa.h()/8, fa.w()/8);
+	//tue::distance_transform(fa);
+	fa.scale_to_height(64);
+
 	// init host
 	glfwInit();
 	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
@@ -112,10 +126,13 @@ int main()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	}
 
-	constexpr auto tex_mag = 6;
+	constexpr auto tex_mag = 8;
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F,
 			1<<tex_mag, 1<<tex_mag, 0, GL_RED, GL_FLOAT,
 			invalid_pattern(tex_mag).get());
+	glTexSubImage2D(GL_TEXTURE_2D, 0,
+			0, 0, fa.w(), fa.h(),
+			GL_RED, GL_FLOAT, fa.data());
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	static float data[] = {

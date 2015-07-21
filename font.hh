@@ -2,6 +2,9 @@
 #include "map-file.hh"
 #include <string>
 #include <stdexcept>
+#include <cstdint>	// for std::uint32_t
+#include <vector>
+#include "image.hh"
 
 namespace tue
 {
@@ -22,6 +25,7 @@ namespace tue
 		//XXX: ^^^^ DO NOT TOUCH ------------------------------------------
 
 		font(std::string const& path, int index=0);
+		image render(std::uint32_t codepoint, int height=16);
 
 	private:
 		file_map::uptr file;

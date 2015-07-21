@@ -3,8 +3,6 @@
 #include <string>
 #include <vector>
 #include <iostream>
-// flag: map-file.cc font.cc -ggdb
-// opt: 0
 // lib: fontconfig
 // run: valgrind --leak-check=full $exec
 // run-: time $exec
