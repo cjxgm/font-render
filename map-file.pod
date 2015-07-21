@@ -18,11 +18,12 @@ map-file: memory-map a file
 	{
 		struct file_map final
 		{
+			using uptr = std::unique_ptr<file_map>;
 			void* data;
 			std::size_t size;
 		};
 
-		std::unique_ptr<file_map> map_file(std::string const& path);
+		file_map::uptr map_file(std::string const& path);
 
 		inline namespace map_file_exceptions
 		{

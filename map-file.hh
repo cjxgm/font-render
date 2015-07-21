@@ -21,6 +21,7 @@ namespace tue
 		friend uptr::deleter_type;
 		friend uptr map_file(std::string const& path);
 	};
+	file_map::uptr map_file(std::string const& path);
 
 	inline namespace map_file_exceptions
 	{
